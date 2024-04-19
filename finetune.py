@@ -61,7 +61,7 @@ def train(
 
     def formatting_fill_func(example):
         input_seq = f"{example['answer']} [SEP] {example['paragraphs']}"
-        output_seq = f"{example['sentence_answer_mask']} [SEP] "
+        output_seq = f"{example['sentence_answer_mask']} [SEP] {example['options']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
     def bleu(predict, goal):
@@ -98,11 +98,11 @@ def train(
                 ['paragraph', 'question', 'answer', 'options'])
         elif question_type == 'fill':
             train_dataset = train_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['context', 'question', 'answer'])
+                ['answer','paragraph_question','question','sentence','paragraph','sentence_answer','paragraph_answer','paragraph_sentence','sentence_answer_mask','options'])
             dev_dataset = dev_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['context', 'question', 'answer'])
+                ['answer','paragraph_question','question','sentence','paragraph','sentence_answer','paragraph_answer','paragraph_sentence','sentence_answer_mask','options'])
             test_dataset = test_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['context', 'question', 'answer'])
+                ['answer','paragraph_question','question','sentence','paragraph','sentence_answer','paragraph_answer','paragraph_sentence','sentence_answer_mask','options'])
         return train_dataset, dev_dataset, test_dataset
 
     def compute_metric(

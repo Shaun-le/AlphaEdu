@@ -187,7 +187,7 @@ def train(
             save_strategy="steps",
             save_steps=50,
             save_total_limit=1,
-            gradient_accumulation_steps=16,
+            gradient_accumulation_steps=8,
             report_to='none',
             label_names=['labels']
         )

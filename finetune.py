@@ -91,11 +91,11 @@ def train(
         test_dataset = data['test']
         if question_type == 'mcq':
             train_dataset = train_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
             dev_dataset = dev_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
             test_dataset = test_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
         elif question_type == 'fill':
             train_dataset = train_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
                 ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])

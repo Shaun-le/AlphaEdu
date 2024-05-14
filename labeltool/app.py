@@ -2,151 +2,125 @@ import streamlit as st
 import pandas as pd
 import requests
 
-question_types = ['What', 'Who', 'When', 'Where', 'Why', 'How', 'Others']
-Wh = [0, 0, 0, 0, 0, 0, 0]
-
-def read_json(file_path):
-    df = pd.read_json(file_path)
-    return df
-
-def update_file(df, file_path):
-    df.to_json(file_path)
-
-def find_first_sample_without_questions_answers(df):
-    for index, row in df.iterrows():
-        if not row['questions'] and not row['answers']:
-            return index
-    return None
-
 st.set_page_config(layout="wide")
 
-st.title('Label Tool for QG')
-subject = ['Biology','Geography', 'GDCD', 'History', 'IT', 'Literature']
-question_type_mapping = ['Sub', 'MCQs', 'Gap-fill']
-file_path = ['data/visubqag_sub.json']
+st.title('Label Tool for Alpha Edu')
 
-selected_type = st.selectbox('Type', question_type_mapping)
-
-if selected_type == question_type_mapping[0]:
-    sid = 0
-    df = read_json(file_path[sid])
-elif selected_type == question_type_mapping[1]:
-    sid = 1
-    df = read_json(file_path[sid])
-else:
-    sid = 2
-    df = read_json(file_path[sid])
-
-st.write(df)
-
-if selected_type == question_type_mapping[0]:
-
-    st.title('Subjective test')
-
-    if len(df) == 0:
-        st.write("No data available. Please add some paragraphs.")
+def generateMC(context, question, answer):
+    url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+    headers = {'Content-Type': 'application/json'}
+    data = {
+        'contents': [
+            {
+                'parts': [
+                    {
+                        'text': f"You are a great biologist, here is the following content: context: '{context}', question: '{question}', answer: '{answer}' generate three distract answers. Distractor answers are separated by [SEP]. Example: Distract answer 1 [SEP] Distract answer 2 [SEP] Distract answer 3"
+                    }
+                ]
+            }
+        ]
+    }
+    api_key = 'AIzaSyApFAbCUA1H-VHAidzqmyStHFe92ODeO1Y'
+    params = {'key': api_key}
+    response = requests.post(url, headers=headers, json=data, params=params)
+    if response.status_code == 200:
+        correct = response.json()['candidates'][0]['content']['parts'][0]['text']
+        return correct
     else:
-        search_id = st.text_input("Enter ID to search:")
+        return "Failed to generate distractors"
 
-        if st.button('Search'):
-            if search_id.isdigit():
-                search_id = int(search_id)
-                # Tìm kiếm theo cột ID
-                sample_index = df[df['id'] == search_id].index
-                if len(sample_index) > 0:
-                    st.session_state['sample_index'] = sample_index[0]
-                    st.experimental_rerun()
-                else:
-                    st.warning("ID not found!")
-            else:
-                st.warning("Please enter a valid ID!")
+def read_data(file_path):
+    data = pd.read_json(file_path, encoding='utf-8')
+    return data
 
-        sample_index = st.session_state.get('sample_index', 0)
+def update_data(file_path, data):
+    data.to_json(file_path, force_ascii=False)
 
-        if sample_index >= len(df):
-            st.write("No more samples available.")
+def find_next_unannotated_index(data):
+    for i, row in data.iterrows():
+        if all(row[q_type] == 0 for q_type in question_types):
+            return i
+    return None
+
+file_path_map = {
+    'Biology': 'data/BiologyQA.json',
+    'Geography': 'data/GeographyQA.json'
+}
+
+question_types = ['What', 'Who', 'When', 'Where', 'Why', 'How', 'Others']
+subject = st.selectbox('Choose a subject:', options=list(file_path_map.keys()))
+file_path = file_path_map[subject]
+data = read_data(file_path)
+st.dataframe(data)
+
+if 'sample_index' not in st.session_state:
+    st.session_state['sample_index'] = find_next_unannotated_index(data)
+
+if 'sample_index' in st.session_state:
+    row_index = st.session_state['sample_index']
+    selected_row = data.iloc[row_index]
+    st.write(f"Sample: {row_index + 1} / {len(data)}")
+    context = st.text_area("Context:", value=selected_row['context'], height=150)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        question = st.text_area("Question:", value=selected_row['question'], height=20)
+        data.at[row_index, 'question'] = question
+    with col2:
+        answer = st.text_area("Answer:", value=selected_row['answer'], height=20)
+        data.at[row_index, 'answer'] = answer
+    with col3:
+        distract = st.text_area("Distract:", value=selected_row['distract'], height=20)
+        data.at[row_index, 'distract'] = distract
+
+    columns = st.columns(len(question_types))
+    for i, q_type in enumerate(question_types):
+        if q_type not in data.columns:
+            data[q_type] = ''
+        new_count = columns[i].text_area(q_type + ':', value=selected_row.get(q_type, ''), key=f"{q_type}_{row_index}", height=10)
+        if new_count != selected_row.get(q_type, ''):
+            data.at[row_index, q_type] = new_count
+            update_data(file_path, data)
+
+col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
+with col3:
+    if st.button('Next'):
+        if 'sample_index' in st.session_state:
+            st.session_state['sample_index'] = (st.session_state['sample_index'] + 1) % len(data)
+        st.rerun()
+with col2:
+    if st.button('Next Unannotated'):
+        next_unannotated_index = find_next_unannotated_index(data)
+        if next_unannotated_index is not None:
+            st.session_state['sample_index'] = next_unannotated_index
+        st.rerun()
+with col1:
+    if st.button('Prev'):
+        if 'sample_index' in st.session_state:
+            st.session_state['sample_index'] = (st.session_state['sample_index'] - 1) % len(data)
+        st.rerun()
+with col4:
+    if st.button('Generate Distraction'):
+        new_distract = generateMC(context, question, answer)
+        if new_distract != "Failed to generate distractors":
+            data.at[row_index, 'distract'] = new_distract
+            update_data(file_path, data)
         else:
-            id = df['paragraphs'][sample_index]
-            context = df['paragraphs'][sample_index]
+            st.error("Failed to generate distractors. Please check API and inputs.")
+        st.rerun()
+with col5:
+    if st.button('Delete'):
+        data = data.drop(index=row_index)
+        data.reset_index(drop=True, inplace=True)
+        update_data(file_path, data)
+        st.rerun()
 
-            recon = st.text_area("Context", value=context)
+#with col6:
+    #sample_index_input = st.text_input("Go to Sample Index:")
+    #if sample_index_input:
+        #sample_index_input = int(sample_index_input)
+        #if 0 <= sample_index_input < len(data):
+           #st.session_state['sample_index'] = sample_index_input
 
-            questions = st.session_state.get('questions', df.loc[sample_index, 'questions'])
-            answers = st.session_state.get('answers', df.loc[sample_index, 'answers'])
-            question_types_selected = st.session_state.get('question_types', [''] * len(questions))
-
-            for i, (question, answer, question_type) in enumerate(zip(questions, answers, question_types_selected)):
-                question_key = f"Question {i + 1}"
-                answer_key = f"Answer {i + 1}"
-                question_type_key = f"Question Type {i + 1}"
-
-                if question_type in question_types:
-                    question_type_index = question_types.index(question_type)
-                else:
-                    question_type_index = 0
-                question_type_value = st.selectbox(question_type_key, question_types, index=question_type_index)
-
-                col1, col2 = st.columns(2)
-                with col1:
-                    question_value = st.text_area(question_key, value=question)
-                with col2:
-                    answer_value = st.text_area(answer_key, value=answer)
-
-                questions[i] = question_value
-                answers[i] = answer_value
-                question_types_selected[i] = question_type_value
-
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                if st.button('Add'):
-                    questions.append("")
-                    answers.append("")
-                    question_types_selected.append("")
-                    st.session_state['questions'] = questions
-                    st.session_state['answers'] = answers
-                    st.session_state['question_types'] = question_types_selected
-                    st.rerun()
-
-            with col2:
-                if st.button('Prev') and sample_index > 0:  # Ensure sample_index doesn't go below zero
-                    sample_index -= 1
-                    st.session_state['sample_index'] = sample_index
-                    st.rerun()
-            with col3:
-                if st.button('Next') and sample_index < len(df) - 1:
-                    sample_index += 1
-                    st.session_state['sample_index'] = sample_index
-                    st.rerun()
-            with col5:
-                if st.button('Delete'):
-                    if len(df) > 0:
-                        df.drop(index=sample_index, inplace=True)
-                        df.reset_index(drop=True, inplace=True)
-                        if sample_index >= len(df):
-                            sample_index = len(df) - 1
-                        st.session_state['sample_index'] = sample_index
-                        update_file(df, file_path[sid])
-                    st.rerun()
-            with col4:
-                if st.button('Next Unannotated'):
-                    next_unannotated_index = find_first_sample_without_questions_answers(df)
-                    if next_unannotated_index is not None:
-                        st.session_state['sample_index'] = next_unannotated_index
-                    st.rerun()
-
-            if st.button('Done'):
-                for question_type in question_types_selected:
-                    if question_type in question_types:
-                        index = question_types.index(question_type)
-                        Wh[index] += 1
-                df.at[sample_index, 'paragraphs'] = recon
-                df.at[sample_index, 'questions'] = questions
-                df.at[sample_index, 'answers'] = answers
-                df.at[sample_index, 'Wh'] = Wh
-                update_file(df, file_path[sid])
-                st.rerun()
-elif selected_type == question_type_mapping[1]:
-    st.title('Multiple Choice Questions')
-
-else:
-    st.title('Gap-fill')
+#with col7:
+    #if st.button('RERUN'):
+        #st.rerun()

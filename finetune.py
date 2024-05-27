@@ -56,12 +56,12 @@ def train(
 
     def formatting_mcp_func(example):
         input_seq = f"{example['answer']} [SEP] {example['question']} [SEP] {example['paragraph']}"
-        output_seq = f"{example['options']}"
+        output_seq = f"{example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
     def formatting_fill_func(example):
         input_seq = f"{example['answer']} [SEP] {example['paragraph']}"
-        output_seq = f"{example['sentence_mask']} [SEP] {example['options']}"
+        output_seq = f"{example['sentence_mask']} [SEP] {example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
     def bleu(predict, goal):

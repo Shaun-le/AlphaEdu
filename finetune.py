@@ -61,7 +61,7 @@ def train(
 
     def formatting_fill_func(example):
         input_seq = f"{example['answer']} [SEP] {example['paragraph']}"
-        output_seq = f"{example['sentence_answer_mask']} [SEP] {example['options']}"
+        output_seq = f"{example['sentence_mask']} [SEP] {example['options']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
     def bleu(predict, goal):
@@ -91,18 +91,18 @@ def train(
         test_dataset = data['test']
         if question_type == 'mcq':
             train_dataset = train_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
             dev_dataset = dev_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
             test_dataset = test_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
-                ['paragraph', 'question', 'answer', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
         elif question_type == 'fill':
             train_dataset = train_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
             dev_dataset = dev_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
             test_dataset = test_dataset.map(formatting_fill_func, num_proc=num_proc).remove_columns(
-                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'sentence_answer_mask', 'options'])
+                ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])
         return train_dataset, dev_dataset, test_dataset
 
     def compute_metric(

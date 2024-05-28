@@ -89,6 +89,14 @@ def train(
         train_dataset = data['train']
         dev_dataset = data['validation']
         test_dataset = data['test']
+
+        def remove_nan_samples(dataset):
+            return dataset.filter(lambda x: x['distract'] != '' and x['distract'] != 'nan')
+
+        train_dataset = remove_nan_samples(train_dataset)
+        dev_dataset = remove_nan_samples(dev_dataset)
+        test_dataset = remove_nan_samples(test_dataset)
+
         if question_type == 'mcq':
             train_dataset = train_dataset.map(formatting_mcp_func, num_proc=num_proc).remove_columns(
                 ['question', 'paragraph', 'answer', 'sentence', 'paragraph_sentence', 'paragraph_answer', 'sentence_answer', 'distract', 'sentence_mask'])

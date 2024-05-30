@@ -16,6 +16,7 @@ import nltk
 nltk.download("wordnet")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 nlpvi = spacy.load('vi_core_news_lg')
+
 #nlpen = spacy.load('en_core_web_sm')
 
 def train(
@@ -54,18 +55,23 @@ def train(
         model
     ), "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
 
-    '''def formatting_mcp_func(example):
-        input_seq = f"{example['answer']} [SEP] {example['question']} [SEP] {example['paragraph']}"
-        output_seq = f"{example['distract']}"
-        return {"input_seq" : input_seq, 'output_seq': output_seq}'''
-
     def formatting_mcp_func(example):
-        input_seq = f"{example['question']} [SEP] {example['paragraph_answer']}"
+        input_seq = f"{example['answer']} [SEP] {example['question']} [SEP] {example['paragraph']}"
         output_seq = f"{example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
-    def formatting_fill_func(example):
+    '''def formatting_mcp_func(example):
+        input_seq = f"{example['question']} [SEP] {example['paragraph_answer']}"
+        output_seq = f"{example['distract']}"
+        return {"input_seq" : input_seq, 'output_seq': output_seq}'''
+
+    '''def formatting_fill_func(example):
         input_seq = f"{example['answer']} [SEP] {example['paragraph']}"
+        output_seq = f"{example['sentence_mask']} [SEP] {example['distract']}"
+        return {"input_seq" : input_seq, 'output_seq': output_seq}'''
+
+    def formatting_fill_func(example):
+        input_seq = f"{example['question']} [SEP] {example['paragraph_answer']}"
         output_seq = f"{example['sentence_mask']} [SEP] {example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 

@@ -65,13 +65,8 @@ def train(
         output_seq = f"{example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}'''
 
-    '''def formatting_fill_func(example):
-        input_seq = f"{example['answer']} [SEP] {example['paragraph']}"
-        output_seq = f"{example['sentence_mask']} [SEP] {example['distract']}"
-        return {"input_seq" : input_seq, 'output_seq': output_seq}'''
-
     def formatting_fill_func(example):
-        input_seq = f"{example['question']} [SEP] {example['paragraph_answer']}"
+        input_seq = f"{example['answer']} [SEP] {example['paragraph']}"
         output_seq = f"{example['sentence_mask']} [SEP] {example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 

@@ -56,7 +56,7 @@ def train(
     ), "Please specify a --base_model, e.g. --base_model='huggyllama/llama-7b'"
 
     def formatting_mcp_func(example):
-        input_seq = f"{example['answer']} [SEP] {example['question']} [SEP] {example['paragraph']}"
+        input_seq = f"{example['answer']} [SEP] {example['paragraph']} [SEP] {example['question']}"
         output_seq = f"{example['distract']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 

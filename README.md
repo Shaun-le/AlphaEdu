@@ -9,7 +9,7 @@ We explore the capabilities of pre-trained language models (PLMs) like ViT5 and 
 Finally, our analysis shows that the instruction tuning method has the potential to enhance the performance of QAG models, though it requires additional data. We also provide a system demonstrating how our QAG models function in education.
 
 ## Data
-
+[ViEduQA Datasets](https://huggingface.co/collections/shnl/vieduqa-datasets-664cfb5d1a616e370909994f)
 
 ## Citation
 ```
